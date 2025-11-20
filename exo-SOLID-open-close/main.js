@@ -1,45 +1,55 @@
-const sendgrid = {
-  async send({ to, subject, text }) {
-    console.log('[sendgrid] Email envoyé à', to, 'Sujet:', subject);
-    console.log(text);
+const amountInput = document.querySelector('#order-amount');
+const shippingSelect = document.querySelector('#shipping-type');
+const calcButton = document.querySelector('#calc-btn');
+const resultEl = document.querySelector('#result');
+
+function formatPrice(value) {
+  return value.toFixed(2).replace('.', ',') + ' €';
+}
+
+const shippingStrategies = {
+  standard(orderAmount) {
+    if (orderAmount >= 50) {
+      return 0;
+    } else {
+      return 4.99;
+    }
+  },
+
+  express(orderAmount) {
+    if (orderAmount >= 100) {
+      return 0;
+    } else {
+      return 9.99;
+    }
+  },
+
+  pickup(orderAmount) {
+    if (orderAmount >= 30) {
+      return 0;
+    } else {
+      return 2.99;
+    }
   },
 };
 
 
-class SendgridEmailProvider {
-  async send({ to, subject, text }) {
+function calculateShippingCost(type, orderAmount) {
+  const strategy = shippingStrategies[type];
 
-    return sendgrid.send({ to, subject, text });
+  if (!strategy) {
+
+    return 0;
   }
+
+  return strategy(orderAmount);
 }
 
-class EmailService {
- 
-  constructor(emailProvider) {
-    this.emailProvider = emailProvider; 
-  }
+calcButton.addEventListener('click', () => {
+  const type = shippingSelect.value;
+  const amount = Number(amountInput.value) || 0;
 
-  async sendWelcomeEmail(user) {
-    const subject = 'Bienvenue sur notre plateforme';
-    const text = `Bonjour ${user.firstName},
-
-Merci pour votre inscription.
-
-À bientôt !`;
-
-    // On utilise seulement le CONTRAT (emailProvider.send)
-    await this.emailProvider.send({
-      to: user.email,
-      subject,
-      text,
-    });
-  }
-}
-
-const user = { firstName: 'Kenan', email: 'kenan@example.com' };
-
-
-const emailProvider = new SendgridEmailProvider();
-
-const emailService = new EmailService(emailProvider);
-emailService.sendWelcomeEmail(user);
+  const shippingCost = calculateShippingCost(type, amount);
+  resultEl.textContent =
+    'Frais de livraison : ' + formatPrice(shippingCost);
+});
